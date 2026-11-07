@@ -1,7 +1,25 @@
 
+import { useEditorStore } from './store/useEditorStore'
+import StitchCanvas from './features/canvas/StitchCanvas'
 import AppLayout from './components/layout/AppLayout'
 
+const THREAD_COLORS = [
+  '#57534e',
+  '#9f1239',
+  '#1d4ed8',
+  '#15803d',
+  '#d97706',
+  '#7c3aed',
+]
+
 function App() {
+  const selectedColor = useEditorStore((state) => state.selectedColor)
+  const setSelectedColor = useEditorStore((state) => state.setSelectedColor)
+
+  const stitchCount = useEditorStore(
+    (state) => Object.keys(state.stitches).length,
+  )
+
   return (
     <AppLayout>
       <div className="flex min-h-0 flex-1 flex-col">
@@ -16,9 +34,7 @@ function App() {
             </p>
           </div>
 
-          <span className="text-xs text-stone-400">
-            Untitled Project
-          </span>
+          <span className="text-xs text-stone-400">Untitled Project</span>
         </div>
 
         {/* Editor workspace */}
@@ -46,28 +62,10 @@ function App() {
               <span className="text-xs font-medium text-stone-500">
                 CANVAS PREVIEW
               </span>
-              <span className="text-xs text-stone-400">
-                100% zoom
-              </span>
+              <span className="text-xs text-stone-400">100% zoom</span>
             </div>
 
-            <div
-              className="flex aspect-[3/4] w-full max-w-sm items-center justify-center border border-stone-200 bg-white shadow-sm"
-              style={{
-                backgroundImage:
-                  'linear-gradient(to right, #f0ede7 1px, transparent 1px), linear-gradient(to bottom, #f0ede7 1px, transparent 1px)',
-                backgroundSize: '20px 20px',
-              }}
-            >
-              <div className="bg-white/90 px-6 py-5 text-center">
-                <p className="text-lg font-medium text-stone-700">
-                  Your design starts here.
-                </p>
-                <p className="mt-2 text-xs text-stone-400">
-                  Your creative space is ready.
-                </p>
-              </div>
-            </div>
+            <StitchCanvas />
           </section>
 
           {/* Right properties panel */}
@@ -77,6 +75,7 @@ function App() {
             </h3>
 
             <div className="space-y-5 text-sm">
+              {/* Paper size */}
               <div>
                 <p className="mb-2 font-medium text-stone-700">
                   Paper Size
@@ -86,6 +85,7 @@ function App() {
                 </div>
               </div>
 
+              {/* Orientation */}
               <div>
                 <p className="mb-2 font-medium text-stone-700">
                   Orientation
@@ -95,6 +95,7 @@ function App() {
                 </div>
               </div>
 
+              {/* Stitch size */}
               <div>
                 <p className="mb-2 font-medium text-stone-700">
                   Stitch Size
@@ -102,6 +103,44 @@ function App() {
                 <div className="rounded-lg border border-stone-200 px-3 py-2 text-stone-500">
                   5 mm
                 </div>
+              </div>
+
+              {/* Thread color selector */}
+              <div>
+                <p className="mb-3 font-medium text-stone-700">
+                  Thread Color
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {THREAD_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      aria-label={`Select thread color ${color}`}
+                      aria-pressed={selectedColor === color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`h-8 w-8 rounded-full border-2 transition ${
+                        selectedColor === color
+                          ? 'border-stone-800 ring-2 ring-stone-300'
+                          : 'border-stone-200'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+
+                <p className="mt-2 text-xs text-stone-400">
+                  Selected: {selectedColor}
+                </p>
+              </div>
+
+              {/* Stitch counter */}
+              <div className="border-t border-stone-200 pt-4">
+                <p className="text-sm text-stone-500">Total Stitches</p>
+
+                <p className="mt-1 text-2xl font-semibold text-stone-800">
+                  {stitchCount}
+                </p>
               </div>
             </div>
           </aside>
