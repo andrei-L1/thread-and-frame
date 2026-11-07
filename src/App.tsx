@@ -1,5 +1,14 @@
 
 import { useEditorStore } from './store/useEditorStore'
+import {
+  getGridDimensions,
+  PAPER_PRESETS,
+  STITCH_SIZES,
+  type CanvasSettings,
+  type Orientation,
+  type PaperSize,
+  type StitchSize,
+} from './store/useEditorStore'
 import StitchCanvas from './features/canvas/StitchCanvas'
 import AppLayout from './components/layout/AppLayout'
 
@@ -16,10 +25,47 @@ function App() {
   const selectedColor = useEditorStore((state) => state.selectedColor)
   const setSelectedColor = useEditorStore((state) => state.setSelectedColor)
   const clearStitches = useEditorStore((state) => state.clearStitches)
-
-  const stitchCount = useEditorStore(
-    (state) => Object.keys(state.stitches).length,
+  const setCanvasSettings = useEditorStore(
+    (state) => state.setCanvasSettings,
   )
+
+  const stitches = useEditorStore((state) => state.stitches)
+  const canvasSettings = useEditorStore((state) => state.canvasSettings)
+
+  const stitchCount = Object.keys(stitches).length
+
+  const { columns, rows } = getGridDimensions(canvasSettings)
+
+  const preset = PAPER_PRESETS[canvasSettings.paperSize]
+
+  const paperWidth =
+    canvasSettings.orientation === 'Portrait'
+      ? preset.width
+      : preset.height
+
+  const paperHeight =
+    canvasSettings.orientation === 'Portrait'
+      ? preset.height
+      : preset.width
+
+  const stitchedWidth = columns * canvasSettings.stitchSize
+  const stitchedHeight = rows * canvasSettings.stitchSize
+
+  const handleCanvasSettingChange = (
+    settings: Partial<CanvasSettings>,
+  ) => {
+    const updated = setCanvasSettings(settings)
+
+    if (!updated) {
+      const confirmed = window.confirm(
+        'Changing these settings will remove stitches that fall outside the new canvas. Do you want to continue?',
+      )
+
+      if (confirmed) {
+        setCanvasSettings(settings, true)
+      }
+    }
+  }
 
   const handleClearCanvas = () => {
     if (stitchCount === 0) return
@@ -88,14 +134,17 @@ function App() {
               <span className="text-xs font-medium text-stone-500">
                 CANVAS PREVIEW
               </span>
-              <span className="text-xs text-stone-400">100% zoom</span>
+
+              <span className="text-xs text-stone-400">
+                {columns} × {rows} stitches
+              </span>
             </div>
 
             <StitchCanvas />
           </section>
 
           {/* Right properties panel */}
-          <aside className="hidden w-64 shrink-0 border-l border-stone-200 bg-white p-5 lg:block">
+          <aside className="hidden w-64 shrink-0 overflow-y-auto border-l border-stone-200 bg-white p-5 md:block">
             <h3 className="mb-5 text-xs font-semibold tracking-wider text-stone-400 uppercase">
               Properties
             </h3>
@@ -103,36 +152,112 @@ function App() {
             <div className="space-y-5 text-sm">
               {/* Paper size */}
               <div>
-                <p className="mb-2 font-medium text-stone-700">
+                <label
+                  htmlFor="paper-size"
+                  className="mb-2 block font-medium text-stone-700"
+                >
                   Paper Size
-                </p>
-                <div className="rounded-lg border border-stone-200 px-3 py-2 text-stone-500">
-                  A5
-                </div>
+                </label>
+
+                <select
+                  id="paper-size"
+                  value={canvasSettings.paperSize}
+                  onChange={(event) =>
+                    handleCanvasSettingChange({
+                      paperSize: event.target.value as PaperSize,
+                    })
+                  }
+                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-600 outline-none focus:border-stone-400"
+                >
+                  {Object.keys(PAPER_PRESETS).map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Orientation */}
               <div>
-                <p className="mb-2 font-medium text-stone-700">
+                <label
+                  htmlFor="orientation"
+                  className="mb-2 block font-medium text-stone-700"
+                >
                   Orientation
-                </p>
-                <div className="rounded-lg border border-stone-200 px-3 py-2 text-stone-500">
-                  Portrait
-                </div>
+                </label>
+
+                <select
+                  id="orientation"
+                  value={canvasSettings.orientation}
+                  onChange={(event) =>
+                    handleCanvasSettingChange({
+                      orientation: event.target.value as Orientation,
+                    })
+                  }
+                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-600 outline-none focus:border-stone-400"
+                >
+                  <option value="Portrait">Portrait</option>
+                  <option value="Landscape">Landscape</option>
+                </select>
               </div>
 
               {/* Stitch size */}
               <div>
-                <p className="mb-2 font-medium text-stone-700">
+                <label
+                  htmlFor="stitch-size"
+                  className="mb-2 block font-medium text-stone-700"
+                >
                   Stitch Size
+                </label>
+
+                <select
+                  id="stitch-size"
+                  value={canvasSettings.stitchSize}
+                  onChange={(event) =>
+                    handleCanvasSettingChange({
+                      stitchSize: Number(event.target.value) as StitchSize,
+                    })
+                  }
+                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-600 outline-none focus:border-stone-400"
+                >
+                  {STITCH_SIZES.map((size) => (
+                    <option key={size} value={size}>
+                      {size} mm
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Grid dimensions */}
+              <div className="space-y-2 border-t border-stone-200 pt-4">
+                <p className="font-medium text-stone-700">
+                  Canvas Dimensions
                 </p>
-                <div className="rounded-lg border border-stone-200 px-3 py-2 text-stone-500">
-                  5 mm
+
+                <div className="flex justify-between text-xs text-stone-500">
+                  <span>Paper</span>
+                  <span>
+                    {paperWidth} × {paperHeight} mm
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs text-stone-500">
+                  <span>Stitched area</span>
+                  <span>
+                    {stitchedWidth} × {stitchedHeight} mm
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs text-stone-500">
+                  <span>Grid</span>
+                  <span>
+                    {columns} × {rows}
+                  </span>
                 </div>
               </div>
 
               {/* Thread color selector */}
-              <div>
+              <div className="border-t border-stone-200 pt-4">
                 <p className="mb-3 font-medium text-stone-700">
                   Thread Color
                 </p>

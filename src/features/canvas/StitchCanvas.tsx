@@ -1,61 +1,66 @@
 
 import { Layer, Line, Rect, Stage } from 'react-konva'
-import { useEditorStore } from '../../store/useEditorStore'
+import { getGridDimensions, useEditorStore } from '../../store/useEditorStore'
 
-const GRID_COLUMNS = 24
-const GRID_ROWS = 32
 const CELL_SIZE = 15
-
-const CANVAS_WIDTH = GRID_COLUMNS * CELL_SIZE
-const CANVAS_HEIGHT = GRID_ROWS * CELL_SIZE
-
-const verticalLines = Array.from(
-  { length: GRID_COLUMNS + 1 },
-  (_, index) => ({
-    key: `vertical-${index}`,
-    points: [
-      index * CELL_SIZE,
-      0,
-      index * CELL_SIZE,
-      CANVAS_HEIGHT,
-    ],
-  }),
-)
-
-const horizontalLines = Array.from(
-  { length: GRID_ROWS + 1 },
-  (_, index) => ({
-    key: `horizontal-${index}`,
-    points: [
-      0,
-      index * CELL_SIZE,
-      CANVAS_WIDTH,
-      index * CELL_SIZE,
-    ],
-  }),
-)
 
 function StitchCanvas() {
   const stitches = useEditorStore((state) => state.stitches)
   const toggleStitch = useEditorStore((state) => state.toggleStitch)
+  const canvasSettings = useEditorStore((state) => state.canvasSettings)
+
+  const { columns, rows } = getGridDimensions(canvasSettings)
+
+  const canvasWidth = columns * CELL_SIZE
+  const canvasHeight = rows * CELL_SIZE
+
+  const verticalLines = Array.from({ length: columns + 1 }, (_, index) => (
+    <Line
+      key={`vertical-${index}`}
+      points={[
+        index * CELL_SIZE,
+        0,
+        index * CELL_SIZE,
+        canvasHeight,
+      ]}
+      stroke="#e7e5e4"
+      strokeWidth={1}
+      listening={false}
+    />
+  ))
+
+  const horizontalLines = Array.from({ length: rows + 1 }, (_, index) => (
+    <Line
+      key={`horizontal-${index}`}
+      points={[
+        0,
+        index * CELL_SIZE,
+        canvasWidth,
+        index * CELL_SIZE,
+      ]}
+      stroke="#e7e5e4"
+      strokeWidth={1}
+      listening={false}
+    />
+  ))
 
   return (
-    <div className="overflow-hidden border border-stone-200 bg-white shadow-sm">
-      <Stage width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
+    <div className="max-w-full overflow-auto border border-stone-200 bg-white shadow-sm">
+      <Stage width={canvasWidth} height={canvasHeight}>
         <Layer>
           {/* Canvas background */}
           <Rect
             x={0}
             y={0}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
+            width={canvasWidth}
+            height={canvasHeight}
             fill="#ffffff"
             listening={false}
           />
 
           {/* Individual stitch cells */}
-          {Array.from({ length: GRID_ROWS }, (_, row) =>
-            Array.from({ length: GRID_COLUMNS }, (_, column) => {
+          {Array.from({ length: rows }, (_, row) =>
+            Array.from({ length: columns }, (_, column) => {
               const id = `${column}-${row}`
               const stitch = stitches[id]
 
@@ -73,27 +78,9 @@ function StitchCanvas() {
             }),
           )}
 
-          {/* Vertical grid lines */}
-          {verticalLines.map((line) => (
-            <Line
-              key={line.key}
-              points={line.points}
-              stroke="#e7e5e4"
-              strokeWidth={1}
-              listening={false}
-            />
-          ))}
-
-          {/* Horizontal grid lines */}
-          {horizontalLines.map((line) => (
-            <Line
-              key={line.key}
-              points={line.points}
-              stroke="#e7e5e4"
-              strokeWidth={1}
-              listening={false}
-            />
-          ))}
+          {/* Grid lines */}
+          {verticalLines}
+          {horizontalLines}
         </Layer>
       </Stage>
     </div>
