@@ -15,10 +15,23 @@ const THREAD_COLORS = [
 function App() {
   const selectedColor = useEditorStore((state) => state.selectedColor)
   const setSelectedColor = useEditorStore((state) => state.setSelectedColor)
+  const clearStitches = useEditorStore((state) => state.clearStitches)
 
   const stitchCount = useEditorStore(
     (state) => Object.keys(state.stitches).length,
   )
+
+  const handleClearCanvas = () => {
+    if (stitchCount === 0) return
+
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all stitches? This action cannot be undone.',
+    )
+
+    if (confirmed) {
+      clearStitches()
+    }
+  }
 
   return (
     <AppLayout>
@@ -34,7 +47,20 @@ function App() {
             </p>
           </div>
 
-          <span className="text-xs text-stone-400">Untitled Project</span>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={handleClearCanvas}
+              disabled={stitchCount === 0}
+              className="rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-600 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Clear Canvas
+            </button>
+
+            <span className="text-xs text-stone-400">
+              Untitled Project
+            </span>
+          </div>
         </div>
 
         {/* Editor workspace */}
